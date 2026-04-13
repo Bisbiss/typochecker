@@ -11,8 +11,7 @@ export interface TypoResult {
 }
 
 export async function checkTypos(text: string): Promise<TypoResult[]> {
-  // Membagi teks menjadi beberapa bagian (chunk) untuk menghindari limit token API
-  const chunkSize = 4000; // karakter per chunk
+  const chunkSize = 4000;
   const chunks = [];
   for (let i = 0; i < text.length; i += chunkSize) {
     chunks.push(text.substring(i, i + chunkSize));
@@ -43,7 +42,7 @@ ${chunk}
 
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
+        model: "gemini-2.5-flash-lite",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -52,26 +51,11 @@ ${chunk}
             items: {
               type: Type.OBJECT,
               properties: {
-                originalWord: {
-                  type: Type.STRING,
-                  description: "The misspelled word or phrase.",
-                },
-                correction: {
-                  type: Type.STRING,
-                  description: "The suggested correction.",
-                },
-                context: {
-                  type: Type.STRING,
-                  description: "A short snippet of the surrounding text.",
-                },
-                location: {
-                  type: Type.STRING,
-                  description: "The location of the error (e.g., 'Page 1' or 'Paragraph 2').",
-                },
-                explanation: {
-                  type: Type.STRING,
-                  description: "Explanation of the error in Indonesian.",
-                },
+                originalWord: { type: Type.STRING, description: "The misspelled word or phrase." },
+                correction: { type: Type.STRING, description: "The suggested correction." },
+                context: { type: Type.STRING, description: "A short snippet of the surrounding text." },
+                location: { type: Type.STRING, description: "The location of the error (e.g., 'Page 1' or 'Paragraph 2')." },
+                explanation: { type: Type.STRING, description: "Explanation of the error in Indonesian." },
               },
               required: ["originalWord", "correction", "context", "location", "explanation"],
             },
@@ -82,19 +66,17 @@ ${chunk}
       const jsonStr = response.text?.trim() || "[]";
       const results = JSON.parse(jsonStr) as TypoResult[];
       allResults = [...allResults, ...results];
-      
-      // Memberikan sedikit jeda antar request jika chunk lebih dari 1 untuk menghindari rate limit (Requests Per Minute)
+
       if (chunks.length > 1 && i < chunks.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
     } catch (error: any) {
-      console.error(`Error checking typos in chunk ${i + 1}:`, error);
-      
-      const errMsg = error?.message?.toLowerCase() || "";
-      const isLimit = errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("limit") || errMsg.includes("exhausted");
-      
-      const limitMessage = "Limit API AI telah tercapai (terlalu banyak permintaan atau kuota habis). Silakan coba lagi beberapa saat kemudian.";
-      const generalMessage = "Gagal menganalisis teks. Jika ini karena limit API, silakan coba lagi beberapa saat kemudian.";
+      console.error(`Error checking typos in chunk ${i + 1} with Gemini:`, error);
+      const errMsg = error?.message || "";
+      const isLimit = errMsg.toLowerCase().includes("429") || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("limit");
+
+      const limitMessage = "Limit API Gemini telah tercapai (terlalu banyak permintaan atau kuota habis). Silakan coba lagi beberapa saat kemudian.";
+      const generalMessage = "Gagal menganalisis teks dengan Gemini. " + errMsg;
 
       throw new Error(isLimit ? limitMessage : generalMessage);
     }

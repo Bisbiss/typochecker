@@ -8,13 +8,15 @@ import { FileUpload } from './components/FileUpload';
 import { TypoResults } from './components/TypoResults';
 import { extractTextFromFile } from './services/fileParser';
 import { checkTypos, TypoResult } from './services/geminiService';
-import { Loader2, SpellCheck2, AlertTriangle } from 'lucide-react';
+import { checkTyposLibrary } from './services/libraryService';
+import { Loader2, SpellCheck2, AlertTriangle, Cpu, BookOpen } from 'lucide-react';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<TypoResult[] | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [appMode, setAppMode] = useState<"ai" | "library">("ai");
 
   const handleFileSelect = async (file: File) => {
     setIsLoading(true);
@@ -29,7 +31,12 @@ export default function App() {
         throw new Error("Tidak ada teks yang dapat diekstrak dari dokumen ini.");
       }
 
-      const typos = await checkTypos(text);
+      let typos: TypoResult[] = [];
+      if (appMode === "ai") {
+        typos = await checkTypos(text);
+      } else {
+        typos = await checkTyposLibrary(text);
+      }
       setResults(typos);
     } catch (err: any) {
       console.error(err);
@@ -56,12 +63,34 @@ export default function App() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
           <div className="max-w-2xl mx-auto text-center mb-8">
+            <img src="/images/logo.png" alt="Logo" className="w-24 h-20 mx-auto mb-4" />
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-4">
               Cek Typo Dokumen Anda
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 mb-6">
               Unggah file Word (DOCX) atau PDF. AI kami akan menganalisis dokumen Anda untuk menemukan kesalahan ketik, ejaan, dan tata bahasa dalam bahasa Indonesia maupun Inggris dengan akurasi tinggi.
             </p>
+
+            <div className="flex flex-col items-center justify-center mb-6 gap-3">
+              <div className="inline-flex bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setAppMode("ai")}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    appMode === "ai" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Cpu className="w-4 h-4" /> Mode AI (Akurat)
+                </button>
+                <button
+                  onClick={() => setAppMode("library")}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    appMode === "library" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" /> Mode Library (Offline/Cepat)
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="max-w-3xl mx-auto">
