@@ -1,7 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 export interface TypoResult {
   originalWord: string;
   correction: string;
@@ -11,6 +9,13 @@ export interface TypoResult {
 }
 
 export async function checkTypos(text: string): Promise<TypoResult[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === "undefined" || apiKey.trim() === "") {
+    throw new Error("GEMINI_API_KEY belum diatur. Jika di Vercel, pastikan Anda menambahkan Environment Variables di menu Settings dashboard Vercel.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: apiKey });
+
   const chunkSize = 4000;
   const chunks = [];
   for (let i = 0; i < text.length; i += chunkSize) {
