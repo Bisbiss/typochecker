@@ -108,7 +108,7 @@ export default function App() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4 max-w-3xl mx-auto">
-            <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-lg font-medium text-red-800 mb-1">Terjadi Kesalahan</h3>
               <p className="text-red-600">{error}</p>
