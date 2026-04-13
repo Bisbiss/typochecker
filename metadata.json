@@ -1,0 +1,5 @@
+{
+  "name": "TypoChecker",
+  "description": "A tool for students to check for typos in Indonesian and English documents (Word/PDF).",
+  "requestFramePermissions": []
+}
